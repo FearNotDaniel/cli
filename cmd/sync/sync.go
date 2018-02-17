@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -56,7 +57,7 @@ func newRun(ctx infra.DnoteCtx) core.RunEFunc {
 		}
 
 		if config.APIKey == "" {
-			fmt.Println("Login required. Please run `dnote login`")
+			log.Error("login required. please run `dnote login`\n")
 			return nil
 		}
 
@@ -100,6 +101,9 @@ func newRun(ctx infra.DnoteCtx) core.RunEFunc {
 
 		// Update bookmark
 		ts, err := core.ReadTimestamp(ctx)
+		if err != nil {
+			return errors.Wrap(err, "Failed to read the timestamp")
+		}
 		ts.Bookmark = respData.Bookmark
 
 		err = core.WriteTimestamp(ctx, ts)
@@ -157,7 +161,7 @@ func compressActions(actions []core.Action) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func postActions(ctx infra.DnoteCtx, APIKey string, payload *bytes.Buffer) (*http.Response, error) {
+func postActions(ctx infra.DnoteCtx, APIKey string, payload io.Reader) (*http.Response, error) {
 	endpoint := fmt.Sprintf("%s/v1/sync", ctx.APIEndpoint)
 	req, err := http.NewRequest("POST", endpoint, payload)
 	if err != nil {

@@ -45,7 +45,7 @@ func migrateToV2(ctx infra.DnoteCtx) error {
 	}
 
 	for bookName, book := range preDnote {
-		notes := []migrateToV2PostNote{}
+		var notes = make([]migrateToV2PostNote, 0, len(book))
 		for _, note := range book {
 			newNote := migrateToV2PostNote{
 				UUID:     uuid.NewV4().String(),
@@ -95,7 +95,7 @@ func migrateToV3(ctx infra.DnoteCtx) error {
 		return errors.Wrap(err, "Failed to unmarshal existing dnote into JSON")
 	}
 
-	actions := []migrateToV3Action{}
+	var actions []migrateToV3Action
 
 	for bookName, book := range dnote {
 		// Find the minimum added_on timestamp from the notes that belong to the book
@@ -148,15 +148,22 @@ func migrateToV3(ctx infra.DnoteCtx) error {
 func getEditorCommand() string {
 	editor := os.Getenv("EDITOR")
 
-	if editor == "atom" {
+	switch editor {
+	case "atom":
 		return "atom -w"
-	} else if editor == "subl" {
+	case "subl":
 		return "subl -n -w"
-	} else if editor == "mate" {
+	case "mate":
 		return "mate -w"
+	case "vim":
+		return "vim"
+	case "nano":
+		return "nano"
+	case "emacs":
+		return "emacs"
+	default:
+		return "vi"
 	}
-
-	return "vim"
 }
 
 func migrateToV4(ctx infra.DnoteCtx) error {

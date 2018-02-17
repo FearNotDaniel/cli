@@ -14,10 +14,6 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-const (
-	letterRunes = "abcdefghipqrstuvwxyz0123456789"
-)
-
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -37,8 +33,15 @@ func GetInput() (string, error) {
 	return input, nil
 }
 
-func AskConfirmation(question string) (bool, error) {
-	log.Printf("%s (y/N): ", question)
+func AskConfirmation(question string, optimistic bool) (bool, error) {
+	var choices string
+	if optimistic {
+		choices = "(Y/n)"
+	} else {
+		choices = "(y/N)"
+	}
+
+	log.Printf("%s %s: ", question, choices)
 
 	res, err := GetInput()
 	if err != nil {
@@ -46,6 +49,10 @@ func AskConfirmation(question string) (bool, error) {
 	}
 
 	confirmed := res == "y\n" || res == "y\r\n"
+
+	if optimistic {
+		confirmed = confirmed || res == "\n" || res == "\r\n"
+	}
 
 	return confirmed, nil
 }
@@ -86,7 +93,7 @@ func CopyFile(src, dest string) error {
 		return errors.Wrap(err, "Failed to copy the file content")
 	}
 
-	if err := out.Sync(); err != nil {
+	if err = out.Sync(); err != nil {
 		return errors.Wrap(err, "Failed to flush the output file to disk")
 	}
 
@@ -95,12 +102,12 @@ func CopyFile(src, dest string) error {
 		return errors.Wrap(err, "Failed to get file info for the input file")
 	}
 
-	if err := os.Chmod(dest, fi.Mode()); err != nil {
+	if err = os.Chmod(dest, fi.Mode()); err != nil {
 		return errors.Wrap(err, "Failed to copy permission to the output file")
 	}
 
 	// Close the output file
-	if err := out.Close(); err != nil {
+	if err = out.Close(); err != nil {
 		return errors.Wrap(err, "Failed to close the output file")
 	}
 

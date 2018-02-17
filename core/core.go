@@ -18,7 +18,7 @@ import (
 
 const (
 	// Version is the current version of dnote
-	Version = "0.2.0"
+	Version = "0.2.1"
 
 	// TimestampFilename is the name of the file containing upgrade info
 	TimestampFilename = "timestamps"
@@ -79,15 +79,22 @@ func InitActionFile(ctx infra.DnoteCtx) error {
 func getEditorCommand() string {
 	editor := os.Getenv("EDITOR")
 
-	if editor == "atom" {
+	switch editor {
+	case "atom":
 		return "atom -w"
-	} else if editor == "subl" {
+	case "subl":
 		return "subl -n -w"
-	} else if editor == "mate" {
+	case "mate":
 		return "mate -w"
+	case "vim":
+		return "vim"
+	case "nano":
+		return "nano"
+	case "emacs":
+		return "emacs"
+	default:
+		return "vi"
 	}
-
-	return "vim"
 }
 
 // InitConfigFile populates a new config file if it does not exist yet
@@ -244,7 +251,7 @@ func WriteDnote(ctx infra.DnoteCtx, dnote infra.Dnote) error {
 
 	err = ioutil.WriteFile(notePath, d, 0644)
 	if err != nil {
-		return err
+		errors.Wrap(err, "Failed to write to the dnote file")
 	}
 
 	return nil
@@ -260,7 +267,7 @@ func WriteConfig(ctx infra.DnoteCtx, config infra.Config) error {
 
 	err = ioutil.WriteFile(configPath, d, 0644)
 	if err != nil {
-		return err
+		errors.Wrap(err, "Failed to write to the config file")
 	}
 
 	return nil
@@ -299,14 +306,14 @@ func WriteActionLog(ctx infra.DnoteCtx, actions []Action) error {
 
 	err = ioutil.WriteFile(path, d, 0644)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to write to the actions file")
 	}
 
 	return nil
 }
 
 func ClearActionLog(ctx infra.DnoteCtx) error {
-	content := []Action{}
+	var content []Action
 
 	if err := WriteActionLog(ctx, content); err != nil {
 		return errors.Wrap(err, "Failed to write action log")
@@ -337,7 +344,7 @@ func ReadActionLog(ctx infra.DnoteCtx) ([]Action, error) {
 
 	err = json.Unmarshal(b, &ret)
 	if err != nil {
-		return ret, err
+		return ret, errors.Wrap(err, "Failed to unmarshal action log JSON")
 	}
 
 	return ret, nil
@@ -354,7 +361,7 @@ func ReadConfig(ctx infra.DnoteCtx) (infra.Config, error) {
 
 	err = yaml.Unmarshal(b, &ret)
 	if err != nil {
-		return ret, err
+		return ret, errors.Wrap(err, "Failed to unmarshal config YAML")
 	}
 
 	return ret, nil

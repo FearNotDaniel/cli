@@ -2,11 +2,12 @@ package migrate
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 
 	"github.com/dnote-io/cli/infra"
 	"github.com/dnote-io/cli/utils"
@@ -186,7 +187,7 @@ func readSchema(ctx infra.DnoteCtx) (schema, error) {
 
 	err = yaml.Unmarshal(b, &ret)
 	if err != nil {
-		return ret, err
+		return ret, errors.Wrap(err, "Failed to unmarshal the schema JSON")
 	}
 
 	return ret, nil
